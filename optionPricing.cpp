@@ -62,6 +62,13 @@ vtype onePathPricing (
     return std::max(asset - strike, 0.);
 }
 
+inline double compwiseSum(const std::vector<double>& vec) 
+{
+    double sum(0.);
+    for(int i=0; i<vec.size(); i++) sum+=vec[i];
+    return sum;
+}
+
 void example_option_pricing()
 {
     int num_threads=4;
@@ -136,7 +143,7 @@ void example_option_pricing()
             aad_funcs.forward(*ws);
             mm_total_price=mmAdd(ws->val(payoff_arg), mm_total_price);
             //std::cout << ws->val(payoff_arg)[1] << " Val\n";
-            ws->diff(payoff_arg) = mmSetConst<mmType>(1);
+            ws->setDiff(payoff_arg, 1.0);
             aad_funcs.reverse(*ws);        
 
             mm_vega=mmAdd(ws->diff(vol_arg), mm_vega);
@@ -166,15 +173,8 @@ void example_option_pricing()
     }
     for(auto&& t: threads) t->join();
             
-    auto compwiseSum = [&] (const std::vector<double>& vec) { for(int i=1; i<vec.size(); i++) vec[0]+=vec[i];};
-
-    compwiseSum(total_prices);
-    compwiseSum(rhos);
-    compwiseSum(deltas);
-    compwiseSum(vegas);
-
-    std::cout << "Price " << total_prices[0] << "\n";
-    std::cout << "Delta " << deltas[0] << "\n";
-    std::cout << "Vega " << vegas[0] << "\n";
-    std::cout << "Rho " << rhos[0] << "\n";
+    std::cout << "Price " << compwiseSum(total_prices) << "\n";
+    std::cout << "Delta " << compwiseSum(deltas) << "\n";
+    std::cout << "Vega " << compwiseSum(vegas) << "\n";
+    std::cout << "Rho " << compwiseSum(rhos) << "\n";
 }
